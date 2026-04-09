@@ -1,0 +1,218 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                     String          @id @default(uuid())
+  email                  String          @unique
+  password               String
+  firstName              String
+  lastName               String
+  phone                  String?
+  role                   UserRole
+  isActive               Boolean         @default(true)
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  appointmentsAsDoctor   Appointment[]   @relation("AppointmentDoctor")
+  appointmentsAsPatient  Appointment[]   @relation("AppointmentPatient")
+  logs                   AuditLog[]
+  doctorProfile          DoctorProfile?
+  invoices               Invoice[]
+  patientProfile         PatientProfile?
+  patientRecords         PatientRecord[]
+  prescriptionsAsDoctor  Prescription[]  @relation("PrescriptionDoctor")
+  prescriptionsAsPatient Prescription[]  @relation("PrescriptionPatient")
+
+  @@map("users")
+}
+
+model PatientProfile {
+  id        String          @id @default(uuid())
+  userId    String          @unique
+  birthDate DateTime?
+  gender    String?
+  address   String?
+  bloodType String?
+  allergies String?
+  createdAt DateTime        @default(now())
+  user      User            @relation(fields: [userId], references: [id])
+  records   PatientRecord[]
+
+  @@map("patient_profiles")
+}
+
+model DoctorProfile {
+  id             String               @id @default(uuid())
+  userId         String               @unique
+  crm            String               @unique
+  specialization String
+  bio            String?
+  createdAt      DateTime             @default(now())
+  availability   DoctorAvailability[]
+  user           User                 @relation(fields: [userId], references: [id])
+
+  @@map("doctor_profiles")
+}
+
+model Appointment {
+  id            String            @id @default(uuid())
+  startTime     DateTime
+  endTime       DateTime
+  status        AppointmentStatus @default(SCHEDULED)
+  notes         String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  patientId     String
+  doctorId      String
+  doctor        User              @relation("AppointmentDoctor", fields: [doctorId], references: [id])
+  patient       User              @relation("AppointmentPatient", fields: [patientId], references: [id])
+  invoices      Invoice[]
+  records       PatientRecord[]
+  prescriptions Prescription[]
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@map("appointments")
+}
+
+model PatientRecord {
+  id               String          @id @default(uuid())
+  diagnosis        String?
+  notes            String?
+  labResults       Json?
+  attachments      Json?
+  temperature      Float?
+  weight           Float?
+  height           Float?
+  createdAt        DateTime        @default(now())
+  patientId        String
+  appointmentId    String
+  patientProfileId String?
+  appointment      Appointment     @relation(fields: [appointmentId], references: [id])
+  patient          User            @relation(fields: [patientId], references: [id])
+  patientProfile   PatientProfile? @relation(fields: [patientProfileId], references: [id])
+
+  @@map("patient_records")
+}
+
+model Prescription {
+  id            String             @id @default(uuid())
+  patientId     String
+  doctorId      String
+  appointmentId String?
+  medications   Json
+  notes         String?
+  status        PrescriptionStatus @default(ACTIVE)
+  createdAt     DateTime           @default(now())
+  appointment   Appointment?       @relation(fields: [appointmentId], references: [id])
+  doctor        User               @relation("PrescriptionDoctor", fields: [doctorId], references: [id])
+  patient       User               @relation("PrescriptionPatient", fields: [patientId], references: [id])
+
+  @@map("prescriptions")
+}
+
+model DoctorAvailability {
+  id        String        @id @default(uuid())
+  doctorId  String
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  doctor    DoctorProfile @relation(fields: [doctorId], references: [id])
+
+  @@map("doctor_availability")
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  invoiceNumber String        @unique
+  patientId     String
+  appointmentId String?
+  amount        Decimal       @db.Decimal(10, 2)
+  status        InvoiceStatus @default(PENDING)
+  dueDate       DateTime
+  createdAt     DateTime      @default(now())
+  appointment   Appointment?  @relation(fields: [appointmentId], references: [id])
+  patient       User          @relation(fields: [patientId], references: [id])
+  payments      Payment[]
+
+  @@map("invoices")
+}
+
+model Payment {
+  id        String   @id @default(uuid())
+  invoiceId String
+  amount    Decimal  @db.Decimal(10, 2)
+  method    String
+  createdAt DateTime @default(now())
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id])
+
+  @@map("payments")
+}
+
+model Medication {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  inventories Inventory[]
+
+  @@map("medications")
+}
+
+model Inventory {
+  id             String     @id @default(uuid())
+  medicationId   String
+  quantity       Int
+  batchNumber    String?
+  expirationDate DateTime?
+  createdAt      DateTime   @default(now())
+  medication     Medication @relation(fields: [medicationId], references: [id])
+
+  @@map("inventory")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+enum UserRole {
+  ADMIN
+  GERENTE
+  MEDICO
+  RECEPCIONISTA
+  PACIENTE
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PrescriptionStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
