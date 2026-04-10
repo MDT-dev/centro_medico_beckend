@@ -1,4 +1,5 @@
 import "dotenv/config";
+console.log("DATABASE_URL:", process.env.DATABASE_URL);
 import express from "express";
 import cors from "cors";
 import { routes } from "./routes";
