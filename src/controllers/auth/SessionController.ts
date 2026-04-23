@@ -3,6 +3,7 @@ import { SessionService } from "../../services/auth/SessionService";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+
 export class SessionController {
   async handle(req: Request, res: Response, next: NextFunction) {
     try {
@@ -12,10 +13,10 @@ export class SessionController {
 
       res.cookie("auth_token", token, {
         httpOnly: true,
-        secure: true, // 🔥 sempre true em produção
-        sameSite: "none", // 🔥 ESSENCIAL
+        secure: true,
+        sameSite: "none",
         maxAge: 24 * 60 * 60 * 1000,
-        path: "/",
+        path: "/"
       });
 
       return res.json({ message: "Login successful", user });
@@ -23,4 +24,6 @@ export class SessionController {
       next(err);
     }
   }
+
 }
+

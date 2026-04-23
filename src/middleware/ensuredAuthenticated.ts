@@ -5,8 +5,6 @@ import jwt from "jsonwebtoken";
 interface JwtPayload {
   sub: string
   role: string
-  companyId?: string
-  companySlug?: string
 }
 
 export interface RequestWithUser extends Request {
@@ -18,14 +16,8 @@ export interface AuthUser {
   role: string;
 }
 
-export interface AuthCompany {
-  id?: string;
-  slug?: string;
-}
-
 export interface RequestWithUser extends Request {
   user: AuthUser;
-  company?: AuthCompany;
 }
 
 
@@ -59,11 +51,7 @@ export function ensuredAuthenticated() {
         role: decoded.role,
       };
 
-      // opcional e recomendado
-      req.company = {
-        id: decoded.companyId,
-        slug: decoded.companySlug,
-      };
+    
 
       return next();
     } catch {

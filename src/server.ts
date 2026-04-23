@@ -15,7 +15,7 @@ const app = express();
 // Middleware para CORS
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://centro-medico-six.vercel.app"], // domínio do Next.js
+    origin: ["http://localhost:3000", "https://centro-medico-six.vercel.app"," http://192.168.0.15:3000"], // domínio do Next.js
     credentials: true, // 🔥 necessário para cookies/JWT no navegador
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
