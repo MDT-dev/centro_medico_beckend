@@ -3,7 +3,6 @@ import { SessionService } from "../../services/auth/SessionService";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-
 export class SessionController {
   async handle(req: Request, res: Response, next: NextFunction) {
     try {
@@ -16,14 +15,17 @@ export class SessionController {
         secure: true,
         sameSite: "none",
         maxAge: 24 * 60 * 60 * 1000,
-        path: "/"
+        path: "/",
       });
 
-      return res.json({ message: "Login successful", user });
+      // SessionController.ts
+      return res.json({
+        message: "Login successful",
+        user,
+        token, // Envie o token explicitamente aqui
+      });
     } catch (err) {
       next(err);
     }
   }
-
 }
-
